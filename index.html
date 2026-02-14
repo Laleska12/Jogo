@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jogo de Reflexo Avançado</title>
+
+<style>
+/* Fundo do site */
+body{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+  min-height:100vh;
+  font-family:sans-serif;
+  margin:0;
+
+  background: url('imagens/jogo.png') no-repeat center center fixed;
+  background-size: cover;
+
+  color:#fff;
+}
+
+/* Títulos e informações */
+h1{
+  color:#c9a227;
+  margin-bottom:10px;
+}
+#score, #time, #record{
+  font-size:18px;
+  margin-bottom:10px;
+  text-shadow: 1px 1px 5px #000;
+}
+
+/* Área do jogo */
+#game-area{
+  position:relative;
+  width:300px;
+  height:300px;
+  background: rgba(0,0,0,0.6); /* fundo semi-transparente para contraste */
+  border:2px solid #c9a227;
+  border-radius:15px;
+  margin-bottom:20px;
+  box-shadow: 0 0 20px #c9a227;
+}
+
+/* Alvo */
+.target{
+  position:absolute;
+  width:50px;
+  height:50px;
+  background:#c9a227;
+  border-radius:50%;
+  cursor:pointer;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-size:24px;
+  transition:all 0.2s;
+  box-shadow:0 0 15px #fff inset, 0 0 10px #c9a227;
+}
+
+/* Botão */
+button{
+  padding:10px 25px;
+  border:none;
+  border-radius:20px;
+  background:#c9a227;
+  color:#000;
+  font-weight:600;
+  cursor:pointer;
+  transition:0.3s;
+  margin-top:10px;
+}
+button:hover{
+  transform:scale(1.05);
+  box-shadow:0 0 20px #c9a227;
+}
+
+/* Responsivo */
+@media(max-width:480px){
+  #game-area{
+    width:250px;
+    height:250px;
+  }
+  .target{
+    width:40px;
+    height:40px;
+    font-size:20px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<h1>Jogo de Reflexo Avançado</h1>
+<div id="score">Pontuação: 0</div>
+<div id="time">Tempo: 30s</div>
+<div id="record">Recorde: 0</div>
+<div id="game-area"></div>
+<button onclick="startGame()">Iniciar Jogo</button>
+
+<script>
+const gameArea = document.getElementById('game-area');
+const scoreDisplay = document.getElementById('score');
+const timeDisplay = document.getElementById('time');
+const recordDisplay = document.getElementById('record');
+
+let score = 0;
+let target = null;
+let moveInterval = 1500;
+let moveTimer = null;
+let countdown = 30;
+let countdownTimerId = null;
+let record = localStorage.getItem('record') || 0;
+recordDisplay.innerText = `Recorde: ${record}`;
+
+// Iniciar jogo
+function startGame(){
+  score = 0;
+  countdown = 30;
+  moveInterval = 1500;
+  scoreDisplay.innerText = `Pontuação: ${score}`;
+  timeDisplay.innerText = `Tempo: ${countdown}s`;
+
+  if(target) target.remove();
+
+  moveTarget();
+  clearInterval(moveTimer);
+  moveTimer = setInterval(moveTarget, moveInterval);
+
+  clearInterval(countdownTimerId);
+  countdownTimerId = setInterval(updateTime, 1000);
+}
+
+// Atualizar temporizador
+function updateTime(){
+  countdown--;
+  timeDisplay.innerText = `Tempo: ${countdown}s`;
+
+  if(countdown <= 0){
+    endGame();
+  }
+}
+
+// Finalizar jogo
+function endGame(){
+  clearInterval(moveTimer);
+  clearInterval(countdownTimerId);
+  if(target) target.remove();
+
+  if(score > record){
+    localStorage.setItem('record', score);
+    record = score;
+    recordDisplay.innerText = `Recorde: ${record}`;
+    alert(`Fim do jogo!\nPontuação: ${score}\nNovo Recorde! 🏆`);
+  }else{
+    alert(`Fim do jogo!\nPontuação: ${score}`);
+  }
+}
+
+// Criar/mover alvo
+function moveTarget(){
+  if(target) target.remove();
+
+  target = document.createElement('div');
+  target.classList.add('target');
+  target.innerText = '🎯';
+
+  const maxX = gameArea.clientWidth - target.offsetWidth;
+  const maxY = gameArea.clientHeight - target.offsetHeight;
+  const x = Math.floor(Math.random() * maxX);
+  const y = Math.floor(Math.random() * maxY);
+
+  target.style.left = x + 'px';
+  target.style.top = y + 'px';
+
+  target.addEventListener('click', hitTarget);
+  gameArea.appendChild(target);
+}
+
+// Clique no alvo
+function hitTarget(){
+  score++;
+  scoreDisplay.innerText = `Pontuação: ${score}`;
+
+  if(score % 5 === 0 && moveInterval > 400){
+    moveInterval -= 200;
+    clearInterval(moveTimer);
+    moveTimer = setInterval(moveTarget, moveInterval);
+  }
+
+  moveTarget();
+}
+</script>
+
+</body>
+</html>
